@@ -13,58 +13,58 @@ contract TestUniswapLiquidity {
   event Log(string message, uint val);
 
   function addLiquidity(
-    address _tokenA,
-    address _tokenB,
-    uint _amountA,
-    uint _amountB
+    address _token_dai,
+    address _token_weth,
+    uint _amountB,
+    uint _amountA
   ) external {
     
 
-    IERC20(_tokenA).transferFrom(msg.sender, address(this), _amountA);
-    IERC20(_tokenB).transferFrom(msg.sender, address(this), _amountB);
+    IERC20(_token_weth).transferFrom(msg.sender, address(this), _amountA);
+    IERC20(_token_dai).transferFrom(msg.sender, address(this), _amountB);
 
-    IERC20(_tokenA).approve(ROUTER, _amountA);
-    IERC20(_tokenB).approve(ROUTER, _amountB);
+    IERC20(_token_weth).approve(ROUTER, _amountA);
+    IERC20(_token_dai).approve(ROUTER, _amountB);
 
-    (uint amountA, uint amountB, uint liquidity) =
+    (uint amountB, uint amountA, uint liquidity) =
       IUniswapV2Router(ROUTER).addLiquidity(
-        _tokenA,
-        _tokenB,
-        _amountA,
+        _token_dai,
+        _token_weth,
         _amountB,
+        _amountA,
         1,
         1,
         address(this),
         block.timestamp
       );
 
-    console.log("amountA", amountA);
-    console.log("amountB", amountB);
-    console.log("liquidity", liquidity);
+    console.log("added amount weth", (amountA));
+    console.log("added amount dai", (amountB));
+    console.log("liquidity", (liquidity));
     emit Log("amountA", amountA);
     emit Log("amountB", amountB);
     emit Log("liquidity", liquidity);
   }
 
-  function removeLiquidity(address _tokenA, address _tokenB) external {
-    address pair = IUniswapV2Factory(FACTORY).getPair(_tokenA, _tokenB);
+  function removeLiquidity(address _token_weth, address _token_dai) external {
+    address pair = IUniswapV2Factory(FACTORY).getPair(_token_weth, _token_dai);
 
     uint liquidity = IERC20(pair).balanceOf(address(this));
     IERC20(pair).approve(ROUTER, liquidity);
 
     (uint amountA, uint amountB) =
       IUniswapV2Router(ROUTER).removeLiquidity(
-        _tokenA,
-        _tokenB,
+        _token_dai,
+        _token_weth,
         liquidity,
         1,
         1,
         address(this),
         block.timestamp
       );
-      
-    console.log("amountA", amountA);
-    console.log("amountB", amountB);
+
+    console.log("removed amount weth", amountA);
+    console.log("removed amount dai", amountB);
 
     emit Log("amountA", amountA);
     emit Log("amountB", amountB);

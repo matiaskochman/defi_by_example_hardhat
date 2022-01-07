@@ -4,7 +4,7 @@ require('dotenv').config();
 
 const BN = require("bn.js");
 const { sendEther, pow } = require("./util");
-const { WETH, DAI,WETH_KOVAN, DAI_KOVAN, WETH_WHALE_KOVAN, DAI_WHALE_KOVAN } = require("./config");
+const { WETH, DAI,WETH_KOVAN, DAI_KOVAN, WETH_WHALE_KOVAN, DAI_WHALE_KOVAN, DAI_WHALE_KOVAN_1 } = require("./config");
 
 const impersonate = async (address) => {
   await network.provider.request({
@@ -27,11 +27,12 @@ describe("TestUniswapLiquidity", () => {
   const TOKEN_A_WHALE = WETH_WHALE_KOVAN;
   const TOKEN_B = DAI_KOVAN;
   const TOKEN_B_WHALE = DAI_WHALE_KOVAN;
+  const TOKEN_B_WHALE_1 = DAI_WHALE_KOVAN_1;
 
   let testUniswapLiquidity;
   let testUniswap;
-  let tokenA;
-  let tokenB;
+  let token_weth;
+  let token_dai;
 
 
   beforeEach(async () => {
@@ -49,8 +50,8 @@ describe("TestUniswapLiquidity", () => {
     console.log(`TOKEN_B: ${TOKEN_B}`);
 
 
-    tokenA = await ethers.getContractAt('IERC20', TOKEN_A);
-    tokenB = await ethers.getContractAt('IERC20', TOKEN_B);
+    token_weth = await ethers.getContractAt('IERC20', TOKEN_A);
+    token_dai = await ethers.getContractAt('IERC20', TOKEN_B);
 
     const TestUniswapLiquidity = await ethers.getContractFactory("TestUniswapLiquidity");
     testUniswapLiquidity = await TestUniswapLiquidity.deploy();    
@@ -69,55 +70,67 @@ describe("TestUniswapLiquidity", () => {
 
     let token_a_whale_signer =  await impersonate(TOKEN_A_WHALE);
     let token_b_whale_signer =  await impersonate(TOKEN_B_WHALE);
+    let token_b_whale_signer_1 =  await impersonate(TOKEN_B_WHALE_1);
 
-    let balance_weth = await tokenA.balanceOf(TOKEN_A_WHALE);
+    let balance_weth = await token_weth.balanceOf(TOKEN_A_WHALE);
     
     console.log(`TOKEN_A_WHALE balance of balance_dai: ${ethers.utils.formatUnits(balance_weth, 18)}`);
  
-    let balance_dai = await tokenB.balanceOf(TOKEN_B_WHALE);
+    let balance_dai = await token_dai.balanceOf(TOKEN_B_WHALE);
     
     console.log(`TOKEN_B_WHALE balance of balance_dai: ${ethers.utils.formatUnits(balance_dai, 18)}`);
 
     let ethbalance = await ethers.provider.getBalance(TOKEN_B_WHALE);
-    console.log(`whale a eth balance: ${ethbalance}`);
+    console.log(`whale a eth balance: ${ethers.utils.formatUnits(ethbalance, 18)}`);
     await CALLER.sendTransaction({
       to: TOKEN_B_WHALE,
       value: ethers.utils.parseEther("10")
     })
     ethbalance = await ethers.provider.getBalance(TOKEN_B_WHALE);
-    console.log(`whale a eth balance: ${ethbalance}`);
+    console.log(`whale b eth balance: ${ethers.utils.formatUnits(ethbalance, 18)}`);
 
-    let transferTx1 = await tokenA.connect(token_a_whale_signer).transfer(CALLER.address, ethers.utils.parseUnits('1000', 'ether'));
-    let transferTx2 = await tokenB.connect(token_b_whale_signer).transfer(CALLER.address, ethers.utils.parseUnits('2700', 'ether'));
+    await CALLER.sendTransaction({
+      to: TOKEN_B_WHALE_1,
+      value: ethers.utils.parseEther("10")
+    })
+    ethbalance = await ethers.provider.getBalance(TOKEN_B_WHALE_1);
+    console.log(`whale b_1 eth balance: ${ethers.utils.formatUnits(ethbalance, 18)}`);
 
-    balance_dai = await tokenB.balanceOf(TOKEN_B_WHALE);
+    let transferTx1 = await token_weth.connect(token_a_whale_signer).transfer(CALLER.address, ethers.utils.parseUnits('10', 'ether'));
+    let transferTx2 = await token_dai.connect(token_b_whale_signer_1).transfer(CALLER.address, ethers.utils.parseUnits('79000', 'ether'));
+    let transferTx3 = await token_dai.connect(token_b_whale_signer_1).transfer(addr2.address, ethers.utils.parseUnits('100000', 'ether'));
+
+    balance_dai = await token_dai.balanceOf(TOKEN_B_WHALE);
     
     console.log(`TOKEN_B_WHALE balance of balance_dai: ${ethers.utils.formatUnits(balance_dai, 18)}`);
 
-    balance_weth = await tokenA.balanceOf(TOKEN_A_WHALE);
+    balance_weth = await token_weth.balanceOf(TOKEN_A_WHALE);
     
     console.log(`TOKEN_A_WHALE balance of balance_weth: ${ethers.utils.formatUnits(balance_weth, 18)}`);
 
-    balance_weth = await tokenA.balanceOf(CALLER.address);
+    balance_weth = await token_weth.balanceOf(CALLER.address);
     
     console.log(`CALLER balance of balance_weth: ${ethers.utils.formatUnits(balance_weth, 18)}`);
 
-    balance_dai = await tokenB.balanceOf(CALLER.address);
+    balance_dai = await token_dai.balanceOf(CALLER.address);
     
     console.log(`CALLER balance of balance_dai: ${ethers.utils.formatUnits(balance_dai, 18)}`);
 
+    balance_dai = await token_dai.balanceOf(addr2.address);
+    
+    console.log(`addr2 balance of balance_dai: ${ethers.utils.formatUnits(balance_dai, 18)}`);
     
   });
 
-  it("add liquidity and remove liquidity", async () => {
-    await tokenA.approve(testUniswapLiquidity.address, ethers.utils.parseUnits('1000', 'ether'), { from: CALLER.address });
-    await tokenB.approve(testUniswapLiquidity.address, ethers.utils.parseUnits('2600', 'ether'), { from: CALLER.address });
+  it("add liquidity, make a swap and and remove liquidity in KOVAN", async () => {
+    await token_weth.approve(testUniswapLiquidity.address, ethers.utils.parseUnits('1000', 'ether'), { from: CALLER.address });
+    await token_dai.approve(testUniswapLiquidity.address, ethers.utils.parseUnits('2600', 'ether'), { from: CALLER.address });
 
     let tx = await testUniswapLiquidity.addLiquidity(
-      tokenA.address,
-      tokenB.address,
-      ethers.utils.parseUnits('1', 'ether'),
-      ethers.utils.parseUnits('2600', 'ether'),
+      token_dai.address,
+      token_weth.address,
+      ethers.utils.parseUnits('2000', 'ether'),
+      ethers.utils.parseUnits('10', 'ether'),
       {
         from: CALLER.address,
       }
@@ -125,50 +138,52 @@ describe("TestUniswapLiquidity", () => {
     console.log("=== add liquidity ===");
 
 
-    let AMOUNT_IN = 10;
-    let TO = CALLER.address;
-    await tokenB.approve(testUniswap.address, ethers.utils.parseUnits('1', 'ether'), { from: CALLER.address });
+    let AMOUNT_IN = ethers.utils.parseUnits('100000', 'ether');
+    let TO = addr2.address;
+    await token_dai.connect(addr2).approve(testUniswap.address, AMOUNT_IN, { from: TO });
     console.log('approve testUniswap');
 
-    await testUniswap.swap(
-      tokenB.address,
-      tokenA.address,
-      ethers.utils.parseUnits('1', 'ether'),
+    // swapping dai for weth
+    await testUniswap.connect(addr2).swap(
+      token_dai.address,
+      token_weth.address,
+      AMOUNT_IN,
       0,
-      CALLER.address,
+      TO,
       {
         from: TO,
       }
     );
 
+    console.log(`in ${ethers.utils.formatUnits(AMOUNT_IN, 18)}`);
+    console.log(`token_weth out ${ethers.utils.formatUnits(await token_weth.balanceOf(TO), 18)}`);
 
-
-    tx = await testUniswapLiquidity.removeLiquidity(tokenA.address, tokenB.address, {
+    tx = await testUniswapLiquidity.removeLiquidity(token_dai.address, token_weth.address, {
       from: CALLER.address,
     });
   });
 
-  it.skip("should pass", async () => {
-    let AMOUNT_IN = 100;
+  it("swap DAI for WETH in KOVAN", async () => {
+    let AMOUNT_IN = ethers.utils.parseUnits('79000', 'ether');
     let TO = CALLER.address;
-    await tokenB.approve(testUniswap.address, AMOUNT_IN, { from: CALLER.address });
+    await token_dai.approve(testUniswap.address, AMOUNT_IN, { from: CALLER.address });
 
     console.log('approve testUniswap');
 
     
     await testUniswap.swap(
-      tokenB.address,
-      tokenA.address,      
+      token_dai.address,
+      token_weth.address,      
       AMOUNT_IN,
       0,
-      CALLER.address,
+      TO,
       {
         from: TO,
       }
     );
 
-    console.log(`in ${AMOUNT_IN}`);
-    console.log(`tokenB out ${await tokenB.balanceOf(TO)}`);
+    console.log(`in ${ethers.utils.formatUnits(AMOUNT_IN, 18)}`);
+    console.log(`token_weth out ${ethers.utils.formatUnits(await token_weth.balanceOf(TO), 18)}`);
   });
 
 });
