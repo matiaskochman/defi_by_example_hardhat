@@ -30,7 +30,7 @@ describe("TestAaveFlashLoan", () => {
   const WHALE = USDC_WHALE
   const TOKEN_BORROW = USDC
   const DECIMALS = 6
-  const FUND_AMOUNT = pow(10, DECIMALS).mul(new BN(2000000))
+  const FUND_AMOUNT = pow(10, DECIMALS).mul(new BN(2000000)) 
   const BORROW_AMOUNT = pow(10, DECIMALS).mul(new BN(1000000))
 
   const ADDRESS_PROVIDER = "0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5"
