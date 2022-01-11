@@ -42,12 +42,6 @@ npx hardhat verify --network ropsten DEPLOYED_CONTRACT_ADDRESS "Hello, Hardhat!"
 ```
 
 
-npx hardhat node --fork https://eth-rinkeby.alchemyapi.io/v2/0N94y3GAH-7Cp8QtV2ox1cSDF4FsajtM --fork-block-number 13952000
-
-npx hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/GZGUDF7BpG3bRSiRtMP84bdPQfa5wkdU --fork-block-number 9945361
-
-npx hardhat node --fork https://eth-kovan.alchemyapi.io/v2/0N94y3GAH-7Cp8QtV2ox1cSDF4FsajtM --fork-block-number 29133779
-
 Dai is available on the:
 
 Ethereum mainnet at 0x6B175474E89094C44Da98b954EedeAC495271d0F
